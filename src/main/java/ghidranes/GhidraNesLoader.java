@@ -15,7 +15,6 @@
  */
 package ghidranes;
 
-import ghidra.program.model.mem.MemoryBlock;
 import static ghidranes.util.AddressSpaceUtil.getLittleEndianAddress;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,6 +44,8 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
+import ghidranes.errors.InvalidNesRomHeaderException;
+import ghidranes.errors.NesRomEofException;
 import ghidranes.errors.NesRomException;
 import ghidranes.errors.UnimplementedNesMapperException;
 import ghidranes.mappers.NesMapper;
@@ -88,22 +89,13 @@ public class GhidraNesLoader extends AbstractLibrarySupportLoader {
 			throws CancelledException, IOException {
 		InputStream bytes = provider.getInputStream(0);
 
-		NesRom rom;
 		try {
+			GhidraNesLoaderHelper helper = new GhidraNesLoaderHelper(program, monitor);
 			NesRomHeader header = new NesRomHeader(bytes);
-			rom = new NesRom(header, bytes);
-		} catch (NesRomException e) {
-			throw new RuntimeException(e);
-		}
+			NesRom rom = new NesRom(header, bytes);
 
-		try {
 			NesMapper mapper = NesMapper.getMapper(rom.header.mapper);
 			mapper.updateMemoryMapForRom(rom, program, monitor);
-		} catch (LockException | MemoryConflictException | AddressOverflowException | DuplicateNameException | UnimplementedNesMapperException e) {
-			throw new RuntimeException(e);
-		}
-
-		try {
 			AddressSpace addressSpace = program.getAddressFactory().getDefaultAddressSpace();
 			SymbolTable symbolTable = program.getSymbolTable();
 			Memory memory =  program.getMemory();
@@ -141,25 +133,9 @@ public class GhidraNesLoader extends AbstractLibrarySupportLoader {
 			nmiTargetSymbol.setPrimary();
 			resTargetSymbol.setPrimary();
 
-			MakeSym(program, monitor, log, 0x2000, 1, "PPUCTRL");
-			MakeSym(program, monitor, log, 0x2001, 1, "PPUMASK");
-			MakeSym(program, monitor, log, 0x2002, 1, "PPUSTATUS");
-			MakeSym(program, monitor, log, 0x2003, 1, "OAMADDR");
-			MakeSym(program, monitor, log, 0x2004, 1, "OAMDATA");
-			MakeSym(program, monitor, log, 0x2005, 1, "PPUSCROLL");
-			MakeSym(program, monitor, log, 0x2006, 1, "PPUADDR");
-			MakeSym(program, monitor, log, 0x2007, 1, "PPUDATA");
-			MakeSym(program, monitor, log, 0x4000, 4, "APU_SND_SQUARE1_REG");
-			MakeSym(program, monitor, log, 0x4004, 4, "APU_SND_SQUARE2_REG");
-			MakeSym(program, monitor, log, 0x4008, 4, "APU_SND_TRIANGLE_REG");
-			MakeSym(program, monitor, log, 0x400c, 2, "APU_NOISE_REG");
-			MakeSym(program, monitor, log, 0x4010, 4, "APU_DELTA_REG");
-			MakeSym(program, monitor, log, 0x4014, 1, "OAMDMA");
-			MakeSym(program, monitor, log, 0x4015, 1, "APU_MASTERCTRL_REG");
-			MakeSym(program, monitor, log, 0x4016, 1, "JOYPAD_PORT1");
-			MakeSym(program, monitor, log, 0x4017, 1, "JOYPAD_PORT2");
-		} catch (InvalidInputException | AddressOutOfBoundsException | MemoryAccessException e) {
-			throw new RuntimeException(e);
+			GhidraNesLoaderHelper.makeSyms(program, monitor, log);
+		} catch (InvalidInputException | AddressOutOfBoundsException | MemoryAccessException | AddressOverflowException | LockException | DuplicateNameException | MemoryConflictException | UnimplementedNesMapperException | InvalidNesRomHeaderException | NesRomEofException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -227,29 +203,9 @@ public class GhidraNesLoader extends AbstractLibrarySupportLoader {
 			MemoryBlockDescription.byteMapped(0x3000, 0x1000, "PPU_MIRROR_10", ppuPermissions, 0x2000)
 				.create(program);
 
-		} catch (LockException e) {
-			throw new RuntimeException(e);
-		} catch (DuplicateNameException e) {
-			throw new RuntimeException(e);
-		} catch (MemoryConflictException e) {
-			throw new RuntimeException(e);
-		} catch (AddressOverflowException e) {
-			throw new RuntimeException(e);
-		} catch (CancelledException e) {
+		} catch (LockException | DuplicateNameException | MemoryConflictException | AddressOverflowException | CancelledException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	private void MakeSym(Program program, TaskMonitor monitor, MessageLog log, int address, int size, String name) {
-		try {
-			Address addr = program.getAddressFactory().getDefaultAddressSpace().getAddress(address);
-			MemoryBlock block = program.getMemory().createInitializedBlock(name, addr, size, (byte)0x00, monitor, false);
-			block.setRead(true);
-			block.setWrite(true);
-			block.setExecute(false);
-			program.getSymbolTable().createLabel(addr, name, SourceType.IMPORTED);
-		}catch(Exception e) {
-			log.appendException(e);
-		}
-	}
 }
