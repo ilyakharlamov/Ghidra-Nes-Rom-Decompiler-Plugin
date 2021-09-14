@@ -50,6 +50,8 @@ public class GhidraNesLoaderHelper {
         makeSym(program, monitor, log, 0x4004, 4, "APU_SND_SQUARE2_REG");
         makeSym(program, monitor, log, 0x4008, 4, "APU_SND_TRIANGLE_REG");
         makeSym(program, monitor, log, 0x400c, 2, "APU_NOISE_REG");
+        makeSym(program, monitor, log, 0x400e, 1, "APU_NOISE_REG_FREQUENCY_2");
+        makeSym(program, monitor, log, 0x400f, 1, "APU_NOISE_REG_FREQUENCY_AND_TIME_3");
         makeSym(program, monitor, log, 0x4010, 4, "APU_DELTA_REG");
         makeSym(program, monitor, log, 0x4014, 1, "OAMDMA");
         makeSym(program, monitor, log, 0x4015, 1, "APU_MASTERCTRL_REG");
