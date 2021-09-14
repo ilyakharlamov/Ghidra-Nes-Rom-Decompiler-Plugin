@@ -15,7 +15,6 @@
  */
 package ghidranes;
 
-import static ghidranes.util.AddressSpaceUtil.getLittleEndianAddress;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -90,60 +89,22 @@ public class GhidraNesLoader extends AbstractLibrarySupportLoader {
 		InputStream bytes = provider.getInputStream(0);
 
 		try {
-			GhidraNesLoaderHelper helper = new GhidraNesLoaderHelper(program, monitor);
+			GhidraNesLoaderHelper ghidraNesLoaderHelper = new GhidraNesLoaderHelper(program, monitor);
 			NesRomHeader header = new NesRomHeader(bytes);
 			NesRom rom = new NesRom(header, bytes);
 
 			NesMapper mapper = NesMapper.getMapper(rom.header.mapper);
 			mapper.updateMemoryMapForRom(rom, program, monitor);
-			AddressSpace addressSpace = program.getAddressFactory().getDefaultAddressSpace();
-			SymbolTable symbolTable = program.getSymbolTable();
-			Memory memory =  program.getMemory();
 
-			Address nmiAddress = addressSpace.getAddress(0xFFFA);
-			createPinnedLabel(symbolTable, nmiAddress, "NMI");
-			symbolTable.addExternalEntryPoint(nmiAddress);
-
-			Address resAddress = addressSpace.getAddress(0xFFFC);
-			createPinnedLabel(symbolTable, resAddress, "RES");
-			symbolTable.addExternalEntryPoint(resAddress);
-
-			Address irqAddress = addressSpace.getAddress(0xFFFE);
-			createPinnedLabel(symbolTable, irqAddress, "IRQ");
-			symbolTable.addExternalEntryPoint(irqAddress);
-
-			Address nmiTargetAddress = getLittleEndianAddress(addressSpace, memory, nmiAddress);
-
-			Address resTargetAddress = getLittleEndianAddress(addressSpace, memory, resAddress);
-
-			Address irqTargetAddress = getLittleEndianAddress(addressSpace, memory, irqAddress);
-
-			Symbol nmiTargetSymbol = symbolTable.createLabel(nmiTargetAddress, "vblank", SourceType.IMPORTED);
-			symbolTable.addExternalEntryPoint(nmiTargetAddress);
-
-			Symbol resTargetSymbol = symbolTable.createLabel(resTargetAddress, "reset", SourceType.IMPORTED);
-			symbolTable.addExternalEntryPoint(resTargetAddress);
-
-			Symbol irqTargetSymbol = symbolTable.createLabel(irqTargetAddress, "irq", SourceType.IMPORTED);
-			symbolTable.addExternalEntryPoint(irqTargetAddress);
-
-			// RES should have the highest precedence, followed by NMI, followed by IRQ. We set them
-			// as primary in reverse order because the last `.setPrimary()` call has precedence
-			irqTargetSymbol.setPrimary();
-			nmiTargetSymbol.setPrimary();
-			resTargetSymbol.setPrimary();
-
-			GhidraNesLoaderHelper.makeSyms(program, monitor, log);
+			ghidraNesLoaderHelper.markAddresses();
+			ghidraNesLoaderHelper.makeSyms(log);
+			ghidraNesLoaderHelper.smartRename();
 		} catch (InvalidInputException | AddressOutOfBoundsException | MemoryAccessException | AddressOverflowException | LockException | DuplicateNameException | MemoryConflictException | UnimplementedNesMapperException | InvalidNesRomHeaderException | NesRomEofException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private static void createPinnedLabel(final SymbolTable symbolTable, final Address address, final String label) throws InvalidInputException {
-		Symbol nmiSymbol = symbolTable.createLabel(address, label, SourceType.IMPORTED);
-		nmiSymbol.setPinned(true);
-		nmiSymbol.setPrimary();
-	}
+
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,

@@ -2,10 +2,18 @@ package ghidranes;
 
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolTable;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
+
+import static ghidranes.util.AddressSpaceUtil.getLittleEndianAddress;
 
 public class GhidraNesLoaderHelper {
     private final Program program;
@@ -29,7 +37,7 @@ public class GhidraNesLoaderHelper {
         }
     }
 
-    static void makeSyms(Program program, TaskMonitor monitor, MessageLog log) {
+    void makeSyms(MessageLog log) {
         makeSym(program, monitor, log, 0x2000, 1, "PPUCTRL");
         makeSym(program, monitor, log, 0x2001, 1, "PPUMASK");
         makeSym(program, monitor, log, 0x2002, 1, "PPUSTATUS");
@@ -47,5 +55,51 @@ public class GhidraNesLoaderHelper {
         makeSym(program, monitor, log, 0x4015, 1, "APU_MASTERCTRL_REG");
         makeSym(program, monitor, log, 0x4016, 1, "JOYPAD_PORT1");
         makeSym(program, monitor, log, 0x4017, 1, "JOYPAD_PORT2");
+    }
+
+    void markAddresses() throws MemoryAccessException, InvalidInputException {
+        AddressSpace addressSpace = program.getAddressFactory().getDefaultAddressSpace();
+        SymbolTable symbolTable = program.getSymbolTable();
+        Memory memory =  program.getMemory();
+
+        Address nmiAddress = addressSpace.getAddress(0xFFFA);
+        createPinnedLabel(symbolTable, nmiAddress, "NMI");
+        symbolTable.addExternalEntryPoint(nmiAddress);
+
+        Address resAddress = addressSpace.getAddress(0xFFFC);
+        createPinnedLabel(symbolTable, resAddress, "RES");
+        symbolTable.addExternalEntryPoint(resAddress);
+
+        Address irqAddress = addressSpace.getAddress(0xFFFE);
+        createPinnedLabel(symbolTable, irqAddress, "IRQ");
+        symbolTable.addExternalEntryPoint(irqAddress);
+
+        // RES should have the highest precedence, followed by NMI, followed by IRQ. We set them
+        // as primary in reverse order because the last `.setPrimary()` call has precedence
+        Address resTargetAddress = getLittleEndianAddress(addressSpace, memory, resAddress);
+        Symbol resTargetSymbol = symbolTable.createLabel(resTargetAddress, "reset", SourceType.IMPORTED);
+        symbolTable.addExternalEntryPoint(resTargetAddress);
+        resTargetSymbol.setPrimary();
+
+        Address nmiTargetAddress = getLittleEndianAddress(addressSpace, memory, nmiAddress);
+        Symbol nmiTargetSymbol = symbolTable.createLabel(nmiTargetAddress, "vblank", SourceType.IMPORTED);
+        symbolTable.addExternalEntryPoint(nmiTargetAddress);
+        nmiTargetSymbol.setPrimary();
+
+        Address irqTargetAddress = getLittleEndianAddress(addressSpace, memory, irqAddress);
+        Symbol irqTargetSymbol = symbolTable.createLabel(irqTargetAddress, "irq", SourceType.IMPORTED);
+        symbolTable.addExternalEntryPoint(irqTargetAddress);
+        irqTargetSymbol.setPrimary();
+    }
+
+    public void smartRename() {
+        System.out.format("IK smart rename\n");
+
+    }
+
+    private static void createPinnedLabel(final SymbolTable symbolTable, final Address address, final String label) throws InvalidInputException {
+        Symbol nmiSymbol = symbolTable.createLabel(address, label, SourceType.IMPORTED);
+        nmiSymbol.setPinned(true);
+        nmiSymbol.setPrimary();
     }
 }
