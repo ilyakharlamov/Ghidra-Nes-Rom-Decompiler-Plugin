@@ -15,14 +15,21 @@
  */
 package ghidranes;
 
+import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.services.AbstractAnalyzer;
+import ghidra.app.services.AnalysisPriority;
 import ghidra.app.services.AnalyzerType;
+import ghidra.app.services.ConsoleService;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import ik.ghidranesrom.wrappers.InstructionWrapper;
+import ik.ghidranesrom.wrappers.LoopWrapper;
+import ik.ghidranesrom.wrappers.ProgramWrapper;
+
 
 /**
  * TODO: Provide class-level documentation that describes what this analyzer does.
@@ -33,7 +40,8 @@ public class GhidraNesAnalyzer extends AbstractAnalyzer {
 
 		// TODO: Name the analyzer and give it a description.
 
-		super("My Analyzer", "Analyzer description goes here", AnalyzerType.BYTE_ANALYZER);
+		super("GhidraNesRom analyzer", "Rename labels", AnalyzerType.INSTRUCTION_ANALYZER);
+		setSupportsOneTimeAnalysis(true);
 	}
 
 	@Override
@@ -41,16 +49,14 @@ public class GhidraNesAnalyzer extends AbstractAnalyzer {
 
 		// TODO: Return true if analyzer should be enabled by default
 
-		return false;
+		return true;
 	}
 
 	@Override
 	public boolean canAnalyze(Program program) {
-
 		// TODO: Examine 'program' to determine of this analyzer should analyze it.  Return true
 		// if it can.
-
-		return false;
+		return true;
 	}
 
 	@Override
@@ -65,10 +71,58 @@ public class GhidraNesAnalyzer extends AbstractAnalyzer {
 	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
-
+		AutoAnalysisManager analysisManager = AutoAnalysisManager.getAnalysisManager(program);
+		ConsoleService consoleService = analysisManager.getAnalysisTool().getService(ConsoleService.class);
 		// TODO: Perform analysis when things get added to the 'program'.  Return true if the
 		// analysis succeeded.
+		consoleService.print("TEST set");
 
+		ProgramWrapper wrapper = new ProgramWrapper(program);
+		for(LoopWrapper loop: wrapper.getLoops()) {
+			loop.renameTo("LOOP_"+loop.getAddress().toString());
+			for (InstructionWrapper instruction: loop.getInstructions()) {
+			}
+		}
 		return false;
+	}
+
+	@Override
+	public void analysisEnded(Program program) {
+
+	}
+
+	@Override
+	protected void setPriority(AnalysisPriority priority) {
+		super.setPriority(priority);
+	}
+
+	@Override
+	protected void setDefaultEnablement(boolean b) {
+		super.setDefaultEnablement(b);
+	}
+
+	@Override
+	protected void setSupportsOneTimeAnalysis() {
+		super.setSupportsOneTimeAnalysis();
+	}
+
+	@Override
+	protected void setSupportsOneTimeAnalysis(boolean supportsOneTimeAnalysis) {
+		super.setSupportsOneTimeAnalysis(supportsOneTimeAnalysis);
+	}
+
+	@Override
+	protected void setPrototype() {
+		super.setPrototype();
+	}
+
+	@Override
+	public boolean removed(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log) throws CancelledException {
+		return super.removed(program, set, monitor, log);
+	}
+
+	@Override
+	public void optionsChanged(Options options, Program program) {
+		super.optionsChanged(options, program);
 	}
 }

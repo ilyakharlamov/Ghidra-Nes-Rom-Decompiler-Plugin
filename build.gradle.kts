@@ -1,9 +1,11 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter.BASIC_ISO_DATE
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME
 import java.util.Properties
 
 import org.gradle.api.tasks.wrapper.Wrapper.DistributionType
+import java.time.format.DateTimeFormatter.BASIC_ISO_DATE
 
 
 plugins {
@@ -59,11 +61,12 @@ val generateExtensionProps by tasks.registering() {
     doLast {
         output.outputStream().use {
             val props = Properties()
-            props.load(project.file("extension.properties").inputStream())
             props += mapOf(
                 ("name" to project.name),
-                ("createdOn" to LocalDate.now().toString()),
-                ("version" to ghidraVersion)
+                ("createdOn" to LocalDateTime.now().toString()),
+                ("author" to "Ilya Kharlamov"),
+                ("version" to ghidraVersion),
+                ("description" to "Support for NES / Famicom disasemmbly in iNES format")
             )
             props.store(it, null)
         }
@@ -121,3 +124,7 @@ tasks.named<Test>("test") {
 }
 
 defaultTasks("clean", "assemble")
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.kotlinOptions {
+    languageVersion = "1.4"
+}
