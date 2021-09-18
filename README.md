@@ -1,6 +1,6 @@
 # GhidraNes
 
-A Ghidra extension to support disassembling and analyzing NES ROMs.
+A Ghidra extension to support disassembling and analyzing NES (Nintendo Entertainment System) and Famicom ROMs.
 
 ![NES game disassembly](.github/screenshots/ghidra-nes.png)
 
@@ -12,8 +12,8 @@ A Ghidra extension to support disassembling and analyzing NES ROMs.
 
 ## Installation
 
-1. Install a Compatible version of Java and Ghidra (Java 11+, tested with Ghidra 9.1.2).
-2. Download the latest [GhidraNes release](https://github.com/kylewlacy/GhidraNes/releases).
+1. Install a Compatible version of Java and Ghidra (Java 11+, tested with Ghidra 10.0.3).
+2. Download the latest [GhidraNesRom release](https://github.com/ilyakharlamov/GhidraNesRom/releases).
 3. Go to "File" > "Install Extensions...". Click "+" in the top-right corner and choose the GhidraNes Zip. Click "OK" to install the extension.
 4. Restart Ghidra.
 
