@@ -55,118 +55,121 @@ import ghidranes.util.MemoryBlockDescription;
  */
 public class GhidraNesLoader extends AbstractLibrarySupportLoader {
 
-	@Override
-	public String getName() {
-		return "NES ROM";
-	}
+    @Override
+    public String getName() {
+        return "NES ROM";
+    }
 
-	@Override
-	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
-		List<LoadSpec> loadSpecs = new ArrayList<>();
+    @Override
+    public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
+        List<LoadSpec> loadSpecs = new ArrayList<>();
 
-		InputStream bytes = provider.getInputStream(0);
+        InputStream bytes = provider.getInputStream(0);
 
-		try {
-			// Try to parse the ROM header (will throw an exception if parsing fails)
-			new NesRomHeader(bytes);
+        try {
+            // Try to parse the ROM header (will throw an exception if parsing fails)
+            new NesRomHeader(bytes);
 
-			// If successful, add the load spec
-			LanguageCompilerSpecPair languageCompilerSpecPair = new LanguageCompilerSpecPair("6502:LE:16:default", "default");
-			LoadSpec loadSpec = new LoadSpec(this, 0, languageCompilerSpecPair, true);
-			loadSpecs.add(loadSpec);
-		}
-		catch (NesRomException e) {
-			// If parsing failed, do not add the load spec
-		}
+            // If successful, add the load spec
+            LanguageCompilerSpecPair languageCompilerSpecPair =
+                    new LanguageCompilerSpecPair("6502:LE:16:default", "default");
+            LoadSpec loadSpec = new LoadSpec(this, 0, languageCompilerSpecPair, true);
+            loadSpecs.add(loadSpec);
+        } catch (NesRomException e) {
+            // If parsing failed, do not add the load spec
+        }
 
-		return loadSpecs;
-	}
+        return loadSpecs;
+    }
 
-	@Override
-	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log)
-			throws CancelledException, IOException {
-		InputStream bytes = provider.getInputStream(0);
+    @Override
+    protected void load(
+            ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+            Program program, TaskMonitor monitor, MessageLog log
+    )
+            throws CancelledException, IOException {
+        InputStream bytes = provider.getInputStream(0);
 
-		try {
-			GhidraNesLoaderHelper ghidraNesLoaderHelper = new GhidraNesLoaderHelper(program, monitor);
-			NesRomHeader header = new NesRomHeader(bytes);
-			NesRom rom = new NesRom(header, bytes);
+        try {
+            GhidraNesLoaderHelper ghidraNesLoaderHelper = new GhidraNesLoaderHelper(program, monitor, log);
+            NesRomHeader header = new NesRomHeader(bytes);
+            NesRom rom = new NesRom(header, bytes);
 
-			NesMapper mapper = NesMapper.getMapper(rom.header.mapper);
-			mapper.updateMemoryMapForRom(rom, program, monitor);
+            NesMapper mapper = NesMapper.getMapper(rom.header.mapper);
+            mapper.updateMemoryMapForRom(rom, program, monitor);
 
-			ghidraNesLoaderHelper.markAddresses();
-			ghidraNesLoaderHelper.makeSyms(log);
-			ghidraNesLoaderHelper.smartRename();
-		} catch (InvalidInputException | AddressOutOfBoundsException | MemoryAccessException | AddressOverflowException | LockException | DuplicateNameException | MemoryConflictException | UnimplementedNesMapperException | InvalidNesRomHeaderException | NesRomEofException e) {
-			e.printStackTrace();
-		}
-	}
+            ghidraNesLoaderHelper.markAddresses();
+            ghidraNesLoaderHelper.makeSyms();
+            ghidraNesLoaderHelper.smartRename();
+        } catch (InvalidInputException | AddressOutOfBoundsException | MemoryAccessException | AddressOverflowException | LockException | DuplicateNameException | MemoryConflictException | UnimplementedNesMapperException | InvalidNesRomHeaderException | NesRomEofException e) {
+            e.printStackTrace();
+        }
+    }
 
 
+    @Override
+    public List<Option> getDefaultOptions(
+            ByteProvider provider, LoadSpec loadSpec,
+            DomainObject domainObject, boolean isLoadIntoProgram
+    ) {
+        List<Option> list =
+                super.getDefaultOptions(provider, loadSpec, domainObject, isLoadIntoProgram);
 
-	@Override
-	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean isLoadIntoProgram) {
-		List<Option> list =
-			super.getDefaultOptions(provider, loadSpec, domainObject, isLoadIntoProgram);
+        return list;
+    }
 
-		return list;
-	}
+    @Override
+    public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
+        return super.validateOptions(provider, loadSpec, options, program);
+    }
 
-	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
-		return super.validateOptions(provider, loadSpec, options, program);
-	}
-
-	@Override
-	protected void createDefaultMemoryBlocks(Program program, Language language, MessageLog log) {
-		// NOTE: We skip the default memory blocks because Ghidra's default 6502 memory map
-		// differs from the NES's memory map
+    @Override
+    protected void createDefaultMemoryBlocks(Program program, Language language, MessageLog log) {
+        // NOTE: We skip the default memory blocks because Ghidra's default 6502 memory map
+        // differs from the NES's memory map
 //		super.createDefaultMemoryBlocks(program, language, log);
 
-		try {
-			int ramPermissions =
-				MemoryBlockDescription.READ | MemoryBlockDescription.WRITE | MemoryBlockDescription.EXECUTE;
-			int ppuPermissions =
-					MemoryBlockDescription.READ | MemoryBlockDescription.WRITE | MemoryBlockDescription.VOLATILE;
-			int apuIoPermissions =
-					MemoryBlockDescription.READ | MemoryBlockDescription.WRITE | MemoryBlockDescription.VOLATILE;
+        try {
+            int ramPermissions =
+                    MemoryBlockDescription.READ | MemoryBlockDescription.WRITE | MemoryBlockDescription.EXECUTE;
+            int ppuPermissions =
+                    MemoryBlockDescription.READ | MemoryBlockDescription.WRITE | MemoryBlockDescription.VOLATILE;
+            int apuIoPermissions =
+                    MemoryBlockDescription.READ | MemoryBlockDescription.WRITE | MemoryBlockDescription.VOLATILE;
 
-			// TODO: Refactor mirrored sections!
-			MemoryBlockDescription.uninitialized(0x0000, 0x0800, "RAM", ramPermissions, false)
-				.create(program);
-			MemoryBlockDescription.byteMapped(0x0800, 0x0800, "RAM_MIRROR_1", ramPermissions, 0x0000)
-				.create(program);
-			MemoryBlockDescription.byteMapped(0x1000, 0x0800, "RAM_MIRROR_2", ramPermissions, 0x0000)
-				.create(program);
-			MemoryBlockDescription.byteMapped(0x1800, 0x0800, "RAM_MIRROR_3", ramPermissions, 0x0000)
-				.create(program);
-			MemoryBlockDescription.byteMapped(0x2008, 0x0008, "PPU_MIRROR_1", ppuPermissions, 0x2000)
-				.create(program);
-			MemoryBlockDescription.byteMapped(0x2010, 0x0010, "PPU_MIRROR_2", ppuPermissions, 0x2000)
-				.create(program);
-			MemoryBlockDescription.byteMapped(0x2020, 0x0020, "PPU_MIRROR_3", ppuPermissions, 0x2000)
-				.create(program);
-			MemoryBlockDescription.byteMapped(0x2040, 0x0040, "PPU_MIRROR_4", ppuPermissions, 0x2000)
-				.create(program);
-			MemoryBlockDescription.byteMapped(0x2080, 0x0080, "PPU_MIRROR_5", ppuPermissions, 0x2000)
-				.create(program);
-			MemoryBlockDescription.byteMapped(0x2100, 0x0100, "PPU_MIRROR_6", ppuPermissions, 0x2000)
-				.create(program);
-			MemoryBlockDescription.byteMapped(0x2200, 0x0200, "PPU_MIRROR_7", ppuPermissions, 0x2000)
-				.create(program);
-			MemoryBlockDescription.byteMapped(0x2400, 0x0400, "PPU_MIRROR_8", ppuPermissions, 0x2000)
-				.create(program);
-			MemoryBlockDescription.byteMapped(0x2800, 0x0800, "PPU_MIRROR_9", ppuPermissions, 0x2000)
-				.create(program);
-			MemoryBlockDescription.byteMapped(0x3000, 0x1000, "PPU_MIRROR_10", ppuPermissions, 0x2000)
-				.create(program);
+            // TODO: Refactor mirrored sections!
+            MemoryBlockDescription.uninitialized(0x0000, 0x0800, "RAM", ramPermissions, false)
+                    .create(program);
+            MemoryBlockDescription.byteMapped(0x0800, 0x0800, "RAM_MIRROR_1", ramPermissions, 0x0000)
+                    .create(program);
+            MemoryBlockDescription.byteMapped(0x1000, 0x0800, "RAM_MIRROR_2", ramPermissions, 0x0000)
+                    .create(program);
+            MemoryBlockDescription.byteMapped(0x1800, 0x0800, "RAM_MIRROR_3", ramPermissions, 0x0000)
+                    .create(program);
+            MemoryBlockDescription.byteMapped(0x2008, 0x0008, "PPU_MIRROR_1", ppuPermissions, 0x2000)
+                    .create(program);
+            MemoryBlockDescription.byteMapped(0x2010, 0x0010, "PPU_MIRROR_2", ppuPermissions, 0x2000)
+                    .create(program);
+            MemoryBlockDescription.byteMapped(0x2020, 0x0020, "PPU_MIRROR_3", ppuPermissions, 0x2000)
+                    .create(program);
+            MemoryBlockDescription.byteMapped(0x2040, 0x0040, "PPU_MIRROR_4", ppuPermissions, 0x2000)
+                    .create(program);
+            MemoryBlockDescription.byteMapped(0x2080, 0x0080, "PPU_MIRROR_5", ppuPermissions, 0x2000)
+                    .create(program);
+            MemoryBlockDescription.byteMapped(0x2100, 0x0100, "PPU_MIRROR_6", ppuPermissions, 0x2000)
+                    .create(program);
+            MemoryBlockDescription.byteMapped(0x2200, 0x0200, "PPU_MIRROR_7", ppuPermissions, 0x2000)
+                    .create(program);
+            MemoryBlockDescription.byteMapped(0x2400, 0x0400, "PPU_MIRROR_8", ppuPermissions, 0x2000)
+                    .create(program);
+            MemoryBlockDescription.byteMapped(0x2800, 0x0800, "PPU_MIRROR_9", ppuPermissions, 0x2000)
+                    .create(program);
+            MemoryBlockDescription.byteMapped(0x3000, 0x1000, "PPU_MIRROR_10", ppuPermissions, 0x2000)
+                    .create(program);
 
-		} catch (LockException | DuplicateNameException | MemoryConflictException | AddressOverflowException | CancelledException e) {
-			throw new RuntimeException(e);
-		}
-	}
+        } catch (LockException | DuplicateNameException | MemoryConflictException | AddressOverflowException | CancelledException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 }

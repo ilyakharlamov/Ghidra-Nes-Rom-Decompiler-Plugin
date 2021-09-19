@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,10 +22,13 @@ import ghidra.app.services.AnalyzerType;
 import ghidra.app.services.ConsoleService;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import ik.ghidranesrom.util.BrandedAddress;
+import ik.ghidranesrom.util.Constants;
 import ik.ghidranesrom.wrappers.InstructionWrapper;
 import ik.ghidranesrom.wrappers.LoopWrapper;
 import ik.ghidranesrom.wrappers.ProgramWrapper;
@@ -36,93 +39,118 @@ import ik.ghidranesrom.wrappers.ProgramWrapper;
  */
 public class GhidraNesAnalyzer extends AbstractAnalyzer {
 
-	public GhidraNesAnalyzer() {
+    public GhidraNesAnalyzer() {
 
-		// TODO: Name the analyzer and give it a description.
+        // TODO: Name the analyzer and give it a description.
 
-		super("GhidraNesRom analyzer", "Rename labels", AnalyzerType.INSTRUCTION_ANALYZER);
-		setSupportsOneTimeAnalysis(true);
-	}
+        super("GhidraNesRom analyzer", "Rename labels", AnalyzerType.INSTRUCTION_ANALYZER);
+        setSupportsOneTimeAnalysis(true);
+    }
 
-	@Override
-	public boolean getDefaultEnablement(Program program) {
+    @Override
+    public boolean getDefaultEnablement(Program program) {
 
-		// TODO: Return true if analyzer should be enabled by default
+        // TODO: Return true if analyzer should be enabled by default
 
-		return true;
-	}
+        return true;
+    }
 
-	@Override
-	public boolean canAnalyze(Program program) {
-		// TODO: Examine 'program' to determine of this analyzer should analyze it.  Return true
-		// if it can.
-		return true;
-	}
+    @Override
+    public boolean canAnalyze(Program program) {
+        // TODO: Examine 'program' to determine of this analyzer should analyze it.  Return true
+        // if it can.
+        return true;
+    }
 
-	@Override
-	public void registerOptions(Options options, Program program) {
+    @Override
+    public void registerOptions(Options options, Program program) {
 
-		// TODO: If this analyzer has custom options, register them here
+        // TODO: If this analyzer has custom options, register them here
 
-		options.registerOption("Option name goes here", false, null,
-			"Option description goes here");
-	}
+        options.registerOption("Option name goes here", false, null,
+                "Option description goes here"
+        );
+    }
 
-	@Override
-	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
-			throws CancelledException {
-		AutoAnalysisManager analysisManager = AutoAnalysisManager.getAnalysisManager(program);
-		ConsoleService consoleService = analysisManager.getAnalysisTool().getService(ConsoleService.class);
-		// TODO: Perform analysis when things get added to the 'program'.  Return true if the
-		// analysis succeeded.
-		consoleService.print("TEST set");
+    @Override
+    public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
+            throws CancelledException {
+        AutoAnalysisManager analysisManager = AutoAnalysisManager.getAnalysisManager(program);
+        ConsoleService consoleService = analysisManager.getAnalysisTool().getService(ConsoleService.class);
+        // TODO: Perform analysis when things get added to the 'program'.  Return true if the
+        // analysis succeeded.
+        consoleService.print("TEST set");
 
-		ProgramWrapper wrapper = new ProgramWrapper(program);
-		for(LoopWrapper loop: wrapper.getLoops()) {
-			loop.renameTo("LOOP_"+loop.getAddress().toString());
-			for (InstructionWrapper instruction: loop.getInstructions()) {
-			}
-		}
-		return false;
-	}
+        ProgramWrapper programWrapper = new ProgramWrapper(program);
+        Analyzer analyzer = new Analyzer(programWrapper);
+        analyzer.analyzeLoops();
 
-	@Override
-	public void analysisEnded(Program program) {
+        return false;
+    }
 
-	}
+    @Override
+    public void analysisEnded(Program program) {
 
-	@Override
-	protected void setPriority(AnalysisPriority priority) {
-		super.setPriority(priority);
-	}
+    }
 
-	@Override
-	protected void setDefaultEnablement(boolean b) {
-		super.setDefaultEnablement(b);
-	}
+    @Override
+    protected void setPriority(AnalysisPriority priority) {
+        super.setPriority(priority);
+    }
 
-	@Override
-	protected void setSupportsOneTimeAnalysis() {
-		super.setSupportsOneTimeAnalysis();
-	}
+    @Override
+    protected void setDefaultEnablement(boolean b) {
+        super.setDefaultEnablement(b);
+    }
 
-	@Override
-	protected void setSupportsOneTimeAnalysis(boolean supportsOneTimeAnalysis) {
-		super.setSupportsOneTimeAnalysis(supportsOneTimeAnalysis);
-	}
+    @Override
+    protected void setSupportsOneTimeAnalysis() {
+        super.setSupportsOneTimeAnalysis();
+    }
 
-	@Override
-	protected void setPrototype() {
-		super.setPrototype();
-	}
+    @Override
+    protected void setSupportsOneTimeAnalysis(boolean supportsOneTimeAnalysis) {
+        super.setSupportsOneTimeAnalysis(supportsOneTimeAnalysis);
+    }
 
-	@Override
-	public boolean removed(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log) throws CancelledException {
-		return super.removed(program, set, monitor, log);
-	}
+    @Override
+    protected void setPrototype() {
+        super.setPrototype();
+    }
 
-	@Override
-	public void optionsChanged(Options options, Program program) {
-		super.optionsChanged(options, program);
-	}
+    @Override
+    public boolean removed(
+            Program program,
+            AddressSetView set,
+            TaskMonitor monitor,
+            MessageLog log
+    ) throws CancelledException {
+        return super.removed(program, set, monitor, log);
+    }
+
+    @Override
+    public void optionsChanged(Options options, Program program) {
+        super.optionsChanged(options, program);
+    }
+}
+
+class Analyzer {
+    private final ProgramWrapper programWrapper;
+
+    public Analyzer(ProgramWrapper programWrapper) {
+        this.programWrapper = programWrapper;
+    }
+
+    public void analyzeLoops() {
+        for (LoopWrapper loop : programWrapper.getLoops()) {
+            loop.renameTo("LOOP_" + loop.getAddress().toString());
+            /*if (loop.getInstructionsInput().size() == 1) {
+                Address addr = loop.getInstructionsInput().get(0).getSource().get().getAddress();
+                if (Constants.brandedAddressImmutableMap.containsKey(addr.getOffset())) {
+                    BrandedAddress branded = Constants.brandedAddressImmutableMap.get(addr.getOffset());
+                    loop.renameTo(String.format("LOOP_%s_%s", branded.getName(), loop.getAddress()));
+                }
+            }*/
+        }
+    }
 }

@@ -22,7 +22,6 @@ public class ProgramWrapper {
     }
 
     public Iterable<LoopWrapper> getLoops() {
-
         return StreamSupport.stream(program.getSymbolTable().getAllSymbols(true).spliterator(), false)
                 .filter(x->x.getSymbolType().equals(SymbolType.LABEL))
                 .filter(x->x.getReferenceCount()==1)
