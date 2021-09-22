@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import os
 import re
+import sys
+import logging
 
 
 class JavaSourceCode(object):
@@ -42,28 +44,39 @@ class Inliner(object):
         return line[line.find("import ")+len("import "):line.rfind(";")]
 
     def replacefile(self, fpath_from, fpath_to):
+        already = set()
         with open(fpath_to, "w") as fout:
             (precomment_lines, import_lines, content_lines) = self.resolve_class_source_code_fpath(fpath_from)
             for import_line in import_lines:
-                if import_line.startswith("import ik.ghidranesrom"):
+                if import_line.startswith("import ik.ghidranesrom") and import_line not in already:
                     (pre, imp, cont) = self.resolve_class_source_code(self.import_to_java_fully_qualified_class_name(import_line))
                     import_lines += imp
+                    #import_lines += ["import ik.ghidranesrom.%s;" % re.compile("public class (\w+)\s*{").search(s).group(1) for s in cont if "public class" in cont]
                     content_lines += map(lambda line:line.replace("public class", "class"), cont)
+                    already.add(import_line)
             for precomment_line in precomment_lines:
                 fout.write(precomment_line)
             for import_line in import_lines:
-                if import_line.startswith("import ik.ghidranesrom"):
+                if "import ik.ghidranesrom" in import_line:
                     continue
                 fout.write(import_line)
             for content_line in content_lines:
                 fout.write(content_line)
 
 
+def find_src_dir():
+    current_dir = os.path.dirname(__file__)
+    while os.path.basename(current_dir) != "src":
+        current_dir = os.path.dirname(current_dir)
+        logging.info("current_dir: %s", current_dir)
+    return current_dir
+
 
 if __name__ == "__main__":
-    script_source_dir = os.path.join(os.path.dirname(__file__), "../", "src", "main", "java", "ik", "ghidranesrom", "script")
-    script_resolve_dir = os.path.join(os.path.dirname(__file__), "../", "src", "main", "java")
-    script_target_dir = os.path.join(os.path.dirname(__file__), "../", "ghidra_scripts", "src")
+    script_src_dir = find_src_dir()
+    script_source_dir = os.path.join(script_src_dir, "script", "java")
+    script_resolve_dir = os.path.join(script_src_dir, "main", "java")
+    script_target_dir = os.path.join(script_src_dir, "../", "ghidra_scripts", "src")
     assert os.path.isdir(script_target_dir), ("%s does not exist" % script_target_dir)
     for fname in os.listdir(script_source_dir):
         if not fname.endswith(".java"):

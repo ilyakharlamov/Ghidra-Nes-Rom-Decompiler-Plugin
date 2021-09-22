@@ -22,7 +22,10 @@ val ghidraDir = System.getenv("GHIDRA_INSTALL_DIR")
     ?: (project.findProperty("ghidra.dir") as? String)
     ?: throw IllegalStateException("Can't find Ghidra installation directory from environment variable GHIDRA_INSTALL_DIR")
 
-val ghidraProps = Properties().apply { file("$ghidraDir/Ghidra/application.properties").inputStream().use { load(it) } }
+val ghidraProps = Properties().apply {
+    file("$ghidraDir/Ghidra/application.properties").inputStream()
+        .use { load(it) }
+}
 val ghidraVersion = ghidraProps.getProperty("application.version")!!
 val ghidraRelease = ghidraProps.getProperty("application.release.name")!!
 
@@ -46,6 +49,7 @@ dependencies {
     ghidra(fileTree("$ghidraDir/Ghidra/Features") { include("**/*.jar") })
 
     compileOnly(ghidra)
+    implementation("com.google.guava:guava:30.1.1-jre")
 
     testImplementation(ghidra)
     testImplementation(kotlin("stdlib-jdk8"))
@@ -85,11 +89,24 @@ val compileSleigh by tasks.registering(JavaExec::class) {
 
     classpath = configurations["ghidra"]
     main = "ghidra.pcodeCPort.slgh_compile.SleighCompile"
-    args = listOf("-u", "-l", "-n", "-t", "-e", "-c", "-f", slaspecFile.absolutePath)
+    args = listOf(
+        "-u",
+        "-l",
+        "-n",
+        "-t",
+        "-e",
+        "-c",
+        "-f",
+        slaspecFile.absolutePath
+    )
 }
 
 val zip by tasks.registering(Zip::class) {
-    archiveFileName.set("ghidra_${ghidraVersion}_${ghidraRelease}_${LocalDate.now().format(BASIC_ISO_DATE)}_${project.name}.zip")
+    archiveFileName.set(
+        "ghidra_${ghidraVersion}_${ghidraRelease}_${
+            LocalDate.now().format(BASIC_ISO_DATE)
+        }_${project.name}.zip"
+    )
 
     into("${project.name}/")
     from(tasks.named("jar")) {
@@ -106,7 +123,14 @@ val zip by tasks.registering(Zip::class) {
     from(generateExtensionProps)
     from("data") {
         into("data/")
-        include("**/*.cspec", "**/*.ldefs", "**/*.pspec", "**/*.sinc", "**/*.slaspec", "**/sleighArgs.txt")
+        include(
+            "**/*.cspec",
+            "**/*.ldefs",
+            "**/*.pspec",
+            "**/*.sinc",
+            "**/*.slaspec",
+            "**/sleighArgs.txt"
+        )
     }
     from("README.markdown", "LICENSE", "Module.manifest")
 }

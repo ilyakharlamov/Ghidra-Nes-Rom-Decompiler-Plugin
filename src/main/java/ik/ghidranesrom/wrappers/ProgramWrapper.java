@@ -1,11 +1,14 @@
 package ik.ghidranesrom.wrappers;
 
+import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolType;
 import ghidra.program.model.symbol.SymbolUtilities;
 
+import java.util.Arrays;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class ProgramWrapper {
@@ -15,19 +18,28 @@ public class ProgramWrapper {
         this.program = program;
     }
 
-    public Iterable<Symbol> getLabels() {
+    public Stream<Symbol> getLabels() {
         return StreamSupport.stream(program.getSymbolTable().getAllSymbols(true).spliterator(), false)
-                .filter(x->x.getSymbolType().equals(SymbolType.LABEL))
-                .collect(Collectors.toList());
+                .filter(x -> x.getSymbolType().equals(SymbolType.LABEL));
     }
 
     public Iterable<LoopWrapper> getLoops() {
         return StreamSupport.stream(program.getSymbolTable().getAllSymbols(true).spliterator(), false)
-                .filter(x->x.getSymbolType().equals(SymbolType.LABEL))
-                .filter(x->x.getReferenceCount()==1)
-                .filter(x-> SymbolUtilities.getDynamicName(x.getProgram(), x.getAddress()).startsWith("LAB_"))
-                .filter(x->x.getReferences()[0].getFromAddress().compareTo(x.getAddress()) > 0)
+                .filter(x -> x.getSymbolType().equals(SymbolType.LABEL))
+                .filter(x -> x.getReferenceCount() == 1)
+                .filter(x -> SymbolUtilities.getDynamicName(x.getProgram(), x.getAddress()).startsWith("LAB_"))
+                .filter(x -> x.getReferences()[0].getFromAddress().compareTo(x.getAddress()) > 0)
                 .map(LoopWrapper::new)
                 .collect(Collectors.toList());
+    }
+
+    public Stream<SymbolWrapper> getFirstLabelAbove(Address address) {
+        return StreamSupport.stream(program.getListing().getInstructions(address, false).spliterator(), false)
+                .dropWhile(l -> !program.getSymbolTable().hasSymbol(l.getAddress()))
+                .findFirst().stream()
+                .flatMap(inst -> Arrays.stream(program.getSymbolTable().getSymbols(inst.getAddress())))
+                .map(SymbolWrapper::new)
+                ;
+
     }
 }

@@ -7,11 +7,14 @@ tmp/
 *.bak
 *.swp
 *.iml
+*.swp
 *~.nib
 local.properties
 .settings/
 .loadpath
 .recommenders
+
+ghidra_scripts
 
 # Unnecessary Eclipse configuration
 .antProperties.xml
