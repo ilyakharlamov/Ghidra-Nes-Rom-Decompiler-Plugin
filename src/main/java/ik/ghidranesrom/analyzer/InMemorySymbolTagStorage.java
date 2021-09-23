@@ -23,7 +23,7 @@ public class InMemorySymbolTagStorage implements SymbolTagStorage {
         ImmutableSet<String> existingValue = map.getOrDefault(symbol.getAddress(), ImmutableSet.of());
         Msg.info(getClass().getSimpleName(), String.format(
                 "old value: %s",
-                this.map.getOrDefault(symbol.getAddress(), ImmutableSet.of())
+                existingValue
         ));
         this.map.put(
                 symbol.getAddress(),
@@ -36,7 +36,7 @@ public class InMemorySymbolTagStorage implements SymbolTagStorage {
     }
 
     @Override
-    public Iterable<String> getAll(Symbol symbol) {
+    public ImmutableSet<String> getAll(Symbol symbol) {
         ImmutableSet<String> val = map.getOrDefault(symbol.getAddress(), ImmutableSet.of());
         Msg.info(getClass().getSimpleName(), String.format("getAll: for symbol %s val:%s, total keys:%s", symbol, val,
                 ImmutableSet.copyOf(map.keySet())
@@ -45,7 +45,7 @@ public class InMemorySymbolTagStorage implements SymbolTagStorage {
     }
 
     @Override
-    public Set<Address> keys() {
-        return this.map.keySet();
+    public ImmutableSet<Address> keys() {
+        return ImmutableSet.copyOf(this.map.keySet());
     }
 }

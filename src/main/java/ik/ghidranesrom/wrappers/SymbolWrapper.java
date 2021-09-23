@@ -1,7 +1,10 @@
 package ik.ghidranesrom.wrappers;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.Symbol;
@@ -11,11 +14,13 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ik.ghidranesrom.util.Constants;
 
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SymbolWrapper {
     private final Symbol symbol;
     private final SymbolTagStorage symbolTagStorage;
+    private ImmutableList<String> orderedLabels = ImmutableList.<String>builder().add("LOOP").build();
 
     public SymbolWrapper(Symbol symbol, SymbolTagStorage symbolTagStorage) {
         this.symbol = symbol;
@@ -33,6 +38,7 @@ public class SymbolWrapper {
     }
 
     public void addTag(String name) {
+        Msg.debug(getClass().getSimpleName(), String.format("adding tag %s ...", name));
         addStorageTag(name);
     }
 
@@ -40,15 +46,18 @@ public class SymbolWrapper {
         symbolTagStorage.add(symbol, name);
     }
 
-    private Iterable<String> getStorageTags() {
+    private ImmutableSet<String> getStorageTags() {
         return symbolTagStorage.getAll(symbol);
     }
 
     public void renameFromTags() {
-        ImmutableList.Builder<String> items = ImmutableList.<String>builder();
-        items.addAll(getStorageTags());
-        items.add(this.symbol.getAddress().toString());
-        ImmutableList<String> tags = items.build();
+        ImmutableList.Builder<String> itemsBuilder = ImmutableList.<String>builder();
+        ImmutableSet<String> storageTags= ImmutableSet.copyOf(getStorageTags());
+        Msg.info("storageTags:", storageTags);
+        itemsBuilder.addAll(orderedLabels.stream().filter(storageTags::contains).collect(Collectors.toList()));
+        itemsBuilder.addAll(storageTags.stream().filter(x->!ImmutableSet.copyOf(orderedLabels).contains(x)).collect(Collectors.toList()));
+        itemsBuilder.add(this.symbol.getAddress().toString());
+        ImmutableList<String> tags = itemsBuilder.build();
         Msg.info(getClass().getSimpleName(), String.format("rename from tags:%s", tags));
         try {
             this.symbol.setName(

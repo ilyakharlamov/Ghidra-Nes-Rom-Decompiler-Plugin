@@ -70,7 +70,7 @@ val generateExtensionProps by tasks.registering() {
                 ("createdOn" to LocalDateTime.now().toString()),
                 ("author" to "Ilya Kharlamov"),
                 ("version" to ghidraVersion),
-                ("description" to "Support for NES / Famicom disasemmbly in iNES format")
+                ("description" to "Support for NES / Famicom ROM disassembly in iNES format")
             )
             props.store(it, null)
         }
