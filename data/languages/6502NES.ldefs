@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  
+  <language processor="6502NES"
+            endian="little"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="6502NES.sla"
+            processorspec="6502NES.pspec"
+            manualindexfile="../manuals/6502.idx"
+            id="6502NES:LE:16:default">
+    <description>6502 Microcontroller Family with (Disassembly Improvements)</description>
+    <compiler name="default" spec="6502NES.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="m6502NES"/>
+  </language>
+
+</language_definitions>

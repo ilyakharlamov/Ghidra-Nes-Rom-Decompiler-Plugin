@@ -1,0 +1,6 @@
+<opinions>
+    <constraint loader="NES ROM" compilerSpecID="NES">
+		<constraint primary="78" secondary="69"  processor="6502NES"  size="16"
+		variant="default" />
+    </constraint>
+</opinions>
