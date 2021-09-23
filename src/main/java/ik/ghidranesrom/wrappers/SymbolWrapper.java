@@ -1,8 +1,6 @@
 package ik.ghidranesrom.wrappers;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import ghidra.program.model.listing.Instruction;
@@ -46,18 +44,8 @@ public class SymbolWrapper {
         symbolTagStorage.add(symbol, name);
     }
 
-    private ImmutableSet<String> getStorageTags() {
-        return symbolTagStorage.getAll(symbol);
-    }
-
     public void renameFromTags() {
-        ImmutableList.Builder<String> itemsBuilder = ImmutableList.<String>builder();
-        ImmutableSet<String> storageTags= ImmutableSet.copyOf(getStorageTags());
-        Msg.info("storageTags:", storageTags);
-        itemsBuilder.addAll(orderedLabels.stream().filter(storageTags::contains).collect(Collectors.toList()));
-        itemsBuilder.addAll(storageTags.stream().filter(x->!ImmutableSet.copyOf(orderedLabels).contains(x)).collect(Collectors.toList()));
-        itemsBuilder.add(this.symbol.getAddress().toString());
-        ImmutableList<String> tags = itemsBuilder.build();
+        ImmutableList<String> tags = getOrderedStorageTags();
         Msg.info(getClass().getSimpleName(), String.format("rename from tags:%s", tags));
         try {
             this.symbol.setName(
@@ -69,6 +57,20 @@ public class SymbolWrapper {
         } catch (InvalidInputException e) {
             e.printStackTrace();
         }
+    }
+
+    private ImmutableList<String> getOrderedStorageTags() {
+        ImmutableList.Builder<String> itemsBuilder = ImmutableList.<String>builder();
+        ImmutableSet<String> storageTags= ImmutableSet.copyOf(symbolTagStorage.getAll(symbol));
+        Msg.info("storageTags:", storageTags);
+        itemsBuilder.addAll(orderedLabels.stream().filter(storageTags::contains).collect(Collectors.toList()));
+        if (storageTags.contains("LOOP") && storageTags.contains("LAB")) {
+            storageTags = ImmutableSet.copyOf(storageTags.stream().filter(x -> !"LAB".equals(x)).collect(Collectors.toSet()));
+        }
+        itemsBuilder.addAll(storageTags.stream().filter(x->!ImmutableSet.copyOf(orderedLabels).contains(x)).collect(Collectors.toList()));
+        itemsBuilder.add(this.symbol.getAddress().toString());
+        ImmutableList<String> tags = itemsBuilder.build();
+        return tags;
     }
 
     public boolean isLoop() {
