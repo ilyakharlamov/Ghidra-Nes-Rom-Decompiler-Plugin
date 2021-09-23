@@ -77,9 +77,13 @@ public class SymbolWrapper {
     public boolean isLoop() {
         Symbol x = symbol;
         boolean isConditional = false;
-        if (x.getSymbolType().equals(SymbolType.LABEL) && x.getReferenceCount() == 1 && x.getProgram().getListing()
+        Msg.info("SymbolType: %s\n", x.getSymbolType());
+        boolean hasAnyLoop = !Arrays.stream(x.getReferences()).filter(ref -> ref.getFromAddress().compareTo(x.getAddress()) > 0).findAny().isEmpty();
+        Msg.info("hasAnyLoop: %s\n", hasAnyLoop);
+        boolean isLabel = x.getSymbolType().equals(SymbolType.LABEL);
+        if (isLabel && hasAnyLoop && x.getProgram().getListing()
                 .getInstructionAt(x.getReferences()[0].getFromAddress()) != null) {
-            Msg.info("isLoop", symbol);
+            Msg.info("isLoop", x);
             Instruction instr = x.getProgram().getListing()
                     .getInstructionAt(x.getReferences()[0].getFromAddress());
             Msg.info("instr", instr);
@@ -89,7 +93,7 @@ public class SymbolWrapper {
                 isConditional = true;
             }
         }
-        return x.getSymbolType().equals(SymbolType.LABEL) && !Arrays.stream(x.getReferences()).filter(ref -> ref.getFromAddress().compareTo(x.getAddress()) > 0).findAny().isEmpty() && isConditional;
+        return isLabel && hasAnyLoop && isConditional;
     }
 }
 
