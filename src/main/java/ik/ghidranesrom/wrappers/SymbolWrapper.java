@@ -12,6 +12,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ik.ghidranesrom.util.Constants;
 
+import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -88,9 +89,7 @@ public class SymbolWrapper {
                 isConditional = true;
             }
         }
-        return x.getSymbolType().equals(SymbolType.LABEL) && x.getReferenceCount() == 1 &&
-                x.getReferences()[0].getFromAddress().compareTo(x.getAddress()) > 0 && isConditional;
-
+        return x.getSymbolType().equals(SymbolType.LABEL) && !Arrays.stream(x.getReferences()).filter(ref -> ref.getFromAddress().compareTo(x.getAddress()) > 0).findAny().isEmpty() && isConditional;
     }
 }
 
