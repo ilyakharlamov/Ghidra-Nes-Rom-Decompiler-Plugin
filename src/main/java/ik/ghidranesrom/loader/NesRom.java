@@ -1,8 +1,9 @@
-package ghidranes;
+package ik.ghidranesrom.loader;
 
 import java.io.IOException;
 import java.io.InputStream;
-import ghidranes.errors.NesRomEofException;
+
+import ik.ghidranesrom.loader.exception.NesRomEofException;
 
 public class NesRom {
 	public NesRomHeader header;

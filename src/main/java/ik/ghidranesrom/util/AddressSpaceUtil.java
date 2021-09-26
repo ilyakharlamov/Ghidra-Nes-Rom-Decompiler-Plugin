@@ -1,4 +1,4 @@
-package ghidranes.util;
+package ik.ghidranesrom.util;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;

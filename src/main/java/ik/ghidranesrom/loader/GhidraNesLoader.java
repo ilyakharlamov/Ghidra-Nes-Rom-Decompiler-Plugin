@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidranes;
+package ik.ghidranesrom.loader;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,27 +28,21 @@ import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.address.AddressOverflowException;
-import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.LanguageCompilerSpecPair;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryConflictException;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
-import ghidranes.errors.InvalidNesRomHeaderException;
-import ghidranes.errors.NesRomEofException;
-import ghidranes.errors.NesRomException;
-import ghidranes.errors.UnimplementedNesMapperException;
-import ghidranes.mappers.NesMapper;
-import ghidranes.util.MemoryBlockDescription;
+import ik.ghidranesrom.loader.exception.InvalidNesRomHeaderException;
+import ik.ghidranesrom.loader.exception.NesRomEofException;
+import ik.ghidranesrom.loader.exception.NesRomException;
+import ik.ghidranesrom.loader.exception.UnimplementedNesMapperException;
+import ik.ghidranesrom.loader.mapper.NesMapper;
+import ik.ghidranesrom.util.MemoryBlockDescription;
 
 /**
  * TODO: Provide class-level documentation that describes what this loader does.

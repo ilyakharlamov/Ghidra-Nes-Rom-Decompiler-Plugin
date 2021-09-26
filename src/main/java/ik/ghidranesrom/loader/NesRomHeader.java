@@ -1,10 +1,10 @@
-package ghidranes;
+package ik.ghidranesrom.loader;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-import ghidranes.errors.InvalidNesRomHeaderException;
-import ghidranes.errors.NesRomEofException;
+import ik.ghidranesrom.loader.exception.InvalidNesRomHeaderException;
+import ik.ghidranesrom.loader.exception.NesRomEofException;
 
 public class NesRomHeader {
 	protected int prgRomSizeBytes;

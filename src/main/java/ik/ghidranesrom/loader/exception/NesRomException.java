@@ -1,4 +1,4 @@
-package ghidranes.errors;
+package ik.ghidranesrom.loader.exception;
 
 public class NesRomException extends Exception {
 	public NesRomException() {

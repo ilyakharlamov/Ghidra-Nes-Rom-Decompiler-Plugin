@@ -1,4 +1,4 @@
-package ghidranes.util;
+package ik.ghidranesrom.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;

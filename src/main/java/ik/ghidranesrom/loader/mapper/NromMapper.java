@@ -1,4 +1,4 @@
-package ghidranes.mappers;
+package ik.ghidranesrom.loader.mapper;
 
 import java.util.Arrays;
 
@@ -9,8 +9,8 @@ import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
-import ghidranes.NesRom;
-import ghidranes.util.MemoryBlockDescription;
+import ik.ghidranesrom.loader.NesRom;
+import ik.ghidranesrom.util.MemoryBlockDescription;
 
 public class NromMapper extends NesMapper {
 	@Override

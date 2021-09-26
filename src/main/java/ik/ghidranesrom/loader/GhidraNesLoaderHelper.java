@@ -1,4 +1,4 @@
-package ghidranes;
+package ik.ghidranesrom.loader;
 
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
@@ -15,7 +15,7 @@ import ghidra.util.task.TaskMonitor;
 import ik.ghidranesrom.util.BrandedAddress;
 import ik.ghidranesrom.util.Constants;
 
-import static ghidranes.util.AddressSpaceUtil.getLittleEndianAddress;
+import static ik.ghidranesrom.util.AddressSpaceUtil.getLittleEndianAddress;
 
 public class GhidraNesLoaderHelper {
     private final Program program;
@@ -61,11 +61,11 @@ public class GhidraNesLoaderHelper {
         nmiSymbol.setPrimary();
     }
 
-    void makeSyms() {
+    public void makeSyms() {
         Constants.brandedAddresses.stream().forEach(this::makeSym);
     }
 
-    void markAddresses() throws MemoryAccessException, InvalidInputException {
+    public void markAddresses() throws MemoryAccessException, InvalidInputException {
         AddressSpace addressSpace = program.getAddressFactory().getDefaultAddressSpace();
         SymbolTable symbolTable = program.getSymbolTable();
         Memory memory = program.getMemory();
